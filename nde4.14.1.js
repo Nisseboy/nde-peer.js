@@ -1044,6 +1044,7 @@ class Aud extends Asset {
 
     this.gainNode = audioContext.createGain();
     this.gainNode.gain.value = this.baseGain;
+    
   }
 
   copy() {
@@ -1068,6 +1069,7 @@ class Aud extends Asset {
     this.gainNode.gain.value = this.baseGain * value;
   }
   get gain() {
+    if (!this.gainNode) return 1;
     return this.gainNode.gain.value / this.baseGain;    
   }
 
@@ -4248,9 +4250,12 @@ class NDE {
     window.addEventListener("resize", e => {this.resize(e)});
 
     document.addEventListener("keydown", e => {
-      if (!audioContext.state == "running") {
+      if (audioContext.state != "running") {
         audioContext.resume();
-        this.fire("audioContextStarted");
+
+        setTimeout(() => {
+          this.fire("audioContextStarted");
+        }, 0);
       }
 
       
@@ -4298,7 +4303,10 @@ class NDE {
     document.addEventListener("mousedown", e => {
       if (audioContext.state != "running") {
         audioContext.resume();
-        this.fire("audioContextStarted");
+
+        setTimeout(() => {
+          this.fire("audioContextStarted");
+        }, 0);
       }
 
 
