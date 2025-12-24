@@ -5,10 +5,18 @@ class SceneMainMenu extends Scene {
     this.cam = new Camera(new Vec(800, 450));
     this.cam.w = 1600;
     this.cam.renderW = nde.w;
+    
+    this.lobbyDisplay = new UIText({
+      style: buttonStyle,
+
+      text: "No Lobby",
+    });
   }
 
   start() {
+
     this.ui = createDefaultUIRoot([
+      this.lobbyDisplay,
       new UIButtonText({
         style: {...buttonStyle,},
         textStyle: {...buttonStyle,
@@ -19,7 +27,7 @@ class SceneMainMenu extends Scene {
         text: "Play",
 
         events: {mousedown: [() => {
-          if (!client || !scenes.game.world) return;
+          if (!client || !world) return;
 
           nde.transition = new TransitionNoise(scenes.game, new TimerTime(0.2), true, 160);
         }]},
@@ -29,11 +37,11 @@ class SceneMainMenu extends Scene {
       new UIButtonText({
         style: {...buttonStyle,},
         textStyle: {...buttonStyle},
-        text: "Host" + (server ? "ing, copy ID" : ""),
+        text: "Host" + (server ? "ing, copy url" : ""),
 
         events: {mousedown: [() => {
           if (server) {
-            navigator.clipboard.writeText(server.id);
+            navigator.clipboard.writeText(url + "?id=" + server.id);
 
             return;
           }

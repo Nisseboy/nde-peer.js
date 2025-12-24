@@ -1,7 +1,8 @@
 let updateInterval = 1000/10;
 let maxPlayers = 12;
-let client;
+let url = "";
 
+let client;
 let server = undefined;
 
 
@@ -30,6 +31,9 @@ function initClient() {
   }, 1000);
 }
 function connectToServer(id) {  
+  let split = id.split("=");
+  if (split.length != 1) id = split[1];
+  
   document.location.search = "?id=" + id;
 }
 
@@ -188,14 +192,16 @@ class ServerBase extends NetworkingBase {
     }
 
     setInterval(() => {
+      let t = performance.now();
+      this.lastUpdateDuration = t - this.lastUpdateTime;
+      this.lastUpdateTime = t;
+
+      this.update(this.lastUpdateDuration / 1000);
+
       for (let id in this.pending) {
         this.send(id, "mult", this.pending[id]);
       }
       this.pending = {};
-
-      let t = performance.now();
-      this.lastUpdateDuration = t - this.lastUpdateTime;
-      this.lastUpdateTime = t;
     }, updateInterval);
   }
 
@@ -244,14 +250,11 @@ class ServerBase extends NetworkingBase {
         this.fire(r[0], senderId, ...r.splice(1, 1000));
       }
     });
-
-    setTimeout(() => {
-      console.log("0: connected");
-      this.fire("connection", client.id);
-    }, 0);
   }
 
-  send(id, channel, ...data) {
+  update(dt) {}
+
+  send(id, channel, ...data) {    
     if (id == 0) {
       client.handleRequest(channel, ...data);
       return;

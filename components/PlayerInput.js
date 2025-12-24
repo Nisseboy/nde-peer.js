@@ -3,6 +3,8 @@ class PlayerInput extends Component {
     super();
 
     this.speed = 4;
+
+    this.clientOnly = true;
   }
 
   start() {}

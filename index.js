@@ -50,7 +50,14 @@ nde.on("afterSetup", () => {
 
   nde.setScene(scenes.mainMenu);
 
-  if (client) scenes.game.setupListeners();
+  if (client) {
+    scenes.game.setupListeners();
+    scenes.mainMenu.lobbyDisplay.text = client.serverId;
+
+    if (settings.autoConnect) setTimeout(() => {
+      if (world) nde.setScene(scenes.game);
+    }, 500);
+  }
 });
 
 nde.on("update", dt => {

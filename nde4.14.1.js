@@ -779,6 +779,13 @@ class EventHandler {
       for (let i = 0; i < events.length; i++) {
         if (events[i](...args) == false) return false;
       }
+    } else {
+      events = this.events["*"];
+      if (events) {
+        for (let i = 0; i < events.length; i++) {
+          if (events[i](eventName, ...args) == false) return false;
+        }
+      }
     }
     
     for (let i = 0; i < this.listeners.length; i++) {
@@ -3583,6 +3590,8 @@ class Component extends Serializable {
 
     this.ob = undefined;
     this.transform = undefined;
+
+    this.clientOnly = false;
   }
 
 
@@ -3965,12 +3974,62 @@ class Ob extends Serializable {
     let index = this.components.indexOf(component);
     if (index == -1) return false;
 
-    this.component.splice(index, 1);
+    this.components.splice(index, 1);
     component.ob = undefined;
     component.transform = undefined;
     return true;
   }
 
+  getComponent(type) {
+    return this.components.find(e=>{return e instanceof type});
+  }
+  getComponents(type, limit = 9999, arr = []) {
+    let comp = this.components.find(e=>{return e instanceof type});
+    if (comp) arr.push(comp);
+
+    for (let i = 0; i < this.children.length; i++) {
+      if (arr.length == limit) return arr;
+      
+      this.children[i].getComponents(type, limit, arr);
+    }
+
+    return arr;
+  }
+
+  find(fn) {
+    let arr = this.findAll(fn, 1);
+    if (arr) return arr[0];
+  }
+  findAll(fn, limit = 9999, arr = []) {
+    if (fn(this)) arr.push(this);
+
+    for (let i = 0; i < this.children.length; i++) {
+      if (arr.length == limit) return arr;
+      
+      this.children[i].findAll(fn, limit, arr);
+    }
+
+    return arr;
+  }
+
+  findId(id) {
+    if (this.id == id) return this;
+
+    for (let i = 0; i < this.children.length; i++) {
+      let res = this.children[i].findId;
+      
+      if (res) return res;
+    }
+  }
+  createLookupTable(table = {}) {
+    table[this.id] = this;
+
+    for (let i = 0; i < this.children.length; i++) {
+      this.children[i].createLookupTable(table);
+    }
+    
+    return table;
+  }
 
   appendChild(...obs) {
     for (let i = 0; i < obs.length; i++) {
@@ -4013,17 +4072,6 @@ class Ob extends Serializable {
   }
 
 
-  createLookupTable(table = {}) {
-    table[this.id] = this;
-
-    for (let i = 0; i < this.children.length; i++) {
-      this.children[i].createLookupTable(table);
-    }
-    
-    return table;
-  }
-
-
 
   from(data) {
     super.from(data);
@@ -4062,6 +4110,18 @@ class Ob extends Serializable {
 
     for (let i = 0; i < this.children.length; i++) {
       this.children[i].strip();
+    }
+  }
+  stripClientComponents() {
+    for (let i = 0; i < this.components.length; i++) {
+      if (this.components[i].clientOnly) {
+        this.removeComponent(this.components[i]);
+        i--;
+      }
+    }
+
+    for (let i = 0; i < this.children.length; i++) {
+      this.children[i].stripClientComponents();
     }
   }
 }

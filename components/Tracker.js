@@ -1,6 +1,8 @@
 class Tracker extends Component {
   constructor() {
     super();
+    
+    this.clientOnly = true;
   }
 
   start() {
@@ -13,7 +15,7 @@ class Tracker extends Component {
       this.oldPos.from(this.transform.pos);
       this.oldDir = this.transform.dir;
 
-      client.sendLater("p", this.ob.id, this.oldPos, this.oldDir);
+      client.sendLater("p", this.ob.id, this.oldPos, this.oldDir);       
     }
   }
 }

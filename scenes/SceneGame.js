@@ -1,4 +1,5 @@
 let idLookup;
+let world;
 
 class SceneGame extends Scene {
   constructor() {
@@ -10,12 +11,13 @@ class SceneGame extends Scene {
   }
 
   setupListeners() {
-    client.on("world", world => {
+    client.on("world", world => {      
       this.loadWorld(cloneData(world));
     });
 
     client.on("createEntity", (parentId, entity) => {
       let e = cloneData(entity);
+      e.stripClientComponents();
       idLookup[parentId].appendChild(e);
       idLookup[e.id] = e;      
     });
@@ -25,7 +27,7 @@ class SceneGame extends Scene {
     });
 
     //Position entity smoothly
-    client.on("p", (entityId, pos, dir) => {      
+    client.on("p", (entityId, pos, dir) => {                 
       let e = idLookup[entityId];
 
       let diffPos = new Vec().from(pos).subV(e.transform.pos).mul(1000/updateInterval);
@@ -41,6 +43,7 @@ class SceneGame extends Scene {
       });
       
     });
+
     //Set properties of entity
     client.on("set", ( entityId, path, value) => { 
       let e = idLookup[entityId];
@@ -51,12 +54,29 @@ class SceneGame extends Scene {
       e[steps[steps.length - 1]] = value;
       if (value.type) e[steps[steps.length - 1]] = cloneData(value);
     });
+
+    //Call function on entity
+    client.on("call", ( entityId, path, ...args) => { 
+      let e = idLookup[entityId];
+      let steps = path.split(".");
+      for (let i = 0; i < steps.length - 1; i++) {
+        e = e[steps[i]];
+      }
+
+      args = args.map(e => {
+        if (value.type) return cloneData(e);
+        else return e;
+      });
+      e[steps[steps.length - 1]](...args);
+    });
   }
   loadWorld(w) {
-    this.world = w;    
+    world = w;
+    if (client.id != 0) world.stripClientComponents();
 
-    idLookup = this.world.createLookupTable();
+    idLookup = world.createLookupTable();
 
+    
     this.player = idLookup[client.id];
     this.player.addComponent(
       new PlayerInput(),
@@ -78,7 +98,8 @@ class SceneGame extends Scene {
   }
 
   update(dt) {  
-    this.world.update(dt);
+    world.update(dt);
+    
 
     this.cam.pos.from(this.player.transform.pos);
     moveListener(this.cam.pos);
@@ -97,7 +118,7 @@ class SceneGame extends Scene {
 
 
     cam._(renderer, () => {
-      this.world.render();
+      world.render();
     });
   }
 }
